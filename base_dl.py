@@ -78,16 +78,21 @@ def single_dl(url, savedir, authorname=None,dry_run=False):
 
     md_str = []
     for i in md:
-        md_str.append(i.get_text().strip())
+        msg = i.get_text().strip()
+        if msg.startswith('Hash'):
+            md_str.append(msg[8:])
+            break
+        else:
+            md_str.append(i.get_text().strip())
 
-    if len(md_str) > 14:
+    if md_str[13].startswith('Trigger'):
         trigger = md_str[14]
     else:
         trigger = 'None'
 
     model_type = md_str[2]
     # print(name)
-    ref_anchor = soup.select('.mantine-1exkstv')
+    # ref_anchor = soup.select('.mantine-1exkstv')
 
     id_list = ['1exkstv', 'jqoeeu']
     unfind_flag= True
@@ -103,20 +108,6 @@ def single_dl(url, savedir, authorname=None,dry_run=False):
         print(f'Link: {url}')
         return
 
-    metadata = {
-        "Name": name,
-        "Creator": creator,
-        'Type': model_type,
-        'Downloaded': md_str[4],
-        'Last Update': md_str[6],
-        'Version': md_str[8],
-        'Base Model': md_str[10],
-        'Trigger Words': trigger,
-        "Size": size,
-        "Link": link,
-        "Description": description,
-        "URL": url,
-    }
 
     # print(link)
     dl_dir = os.path.join(savedir, 'Authors',creator, md_str[2].strip(), name)
@@ -128,14 +119,29 @@ def single_dl(url, savedir, authorname=None,dry_run=False):
     with open(os.path.join(dl_dir, 'html_data.html'), 'w', encoding='utf-8') as f:
         f.write(str(soup))
 
-    with open(os.path.join(dl_dir, 'metadata.json'), 'w', encoding='utf-8') as f:
-        json.dump(metadata, f, indent=4,ensure_ascii=False)
-
     start_time = time.time()
 
     with requests.get(link, stream=True) as r:
         dl_head = r.headers
         filename = os.path.join(dl_dir, dl_head['Content-Disposition'].split('"')[1])
+        metadata = {
+            "Name": name,
+            "Creator": creator,
+            'Type': model_type,
+            'Downloaded': md_str[4],
+            'Last Update': md_str[6],
+            'Version': md_str[8],
+            'Base Model': md_str[10],
+            'Trigger Words': trigger,
+            "Size": size,
+            "Link": link,
+            "Description": description,
+            "URL": url,
+            "Model":filename,
+            "Hash":md_str[-1]
+        }
+        with open(os.path.join(dl_dir, 'metadata.json'), 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=4, ensure_ascii=False)
         if os.path.exists(filename):
             print(f"File exists, skip {name}")
             return
@@ -147,7 +153,7 @@ def single_dl(url, savedir, authorname=None,dry_run=False):
             # f.write(chunk)
             shutil.copyfileobj(r.raw, f)
     print(f"Download Success, ETA: {time.time() - start_time:.2f}s")
-    return
+    return soup
 
 
 def author_dl(author_file, savedir,dry_run=False):
@@ -186,21 +192,23 @@ def author_dl(author_file, savedir,dry_run=False):
                 print(e)
                 print(f'Error on downloading {url}')
                 continue
+    return soup
 
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
-    debug_url = 'https://civitai.com/models/20644/eula-or-realistic-genshin-lora'
-    debug_author = '1'
+    debug_url = 'https://civitai.com/models/24062/lora-or-landmine-girl-fashion-or'
+    debug_author = None
     args.add_argument('-url', type=str, default=debug_url)
     args.add_argument('-author', type=str, default=debug_author)
     args.add_argument('-savedir', type=str, default='./dl')
     args.add_argument('--dryrun', action='store_true')
     args = args.parse_args()
+    args.dryrun = True
     if args.author:
-        author_dl(args.author, args.savedir,args.dryrun)
+        soup=author_dl(args.author, args.savedir,args.dryrun)
     elif args.url:
-        single_dl(args.url, args.savedir,args.dryrun)
+        soup=single_dl(args.url, args.savedir,authorname=None,dry_run=args.dryrun)
 
     # url = 'https://civitai.com/models/23440/panty-pull-or-test-sex-act-lora-117'
     # single_dl(url,'./dl')
