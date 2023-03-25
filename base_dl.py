@@ -47,7 +47,7 @@ headers = {
 }
 
 
-def single_dl(url, savedir, authorname=None):
+def single_dl(url, savedir, authorname=None,dry_run=False):
     response = requests.get(
         url,
         cookies=cookies,
@@ -78,8 +78,6 @@ def single_dl(url, savedir, authorname=None):
 
     md_str = []
     for i in md:
-        if (i.get_text().startswith('Rating')):
-            break
         md_str.append(i.get_text().strip())
 
     if len(md_str) > 14:
@@ -121,11 +119,11 @@ def single_dl(url, savedir, authorname=None):
     }
 
     # print(link)
-    if authorname:
-        dl_dir = os.path.join(savedir, 'Authors',creator, md_str[2].strip(), name)
-    else:
-        dl_dir = os.path.join(savedir, md_str[2].strip(), name)
+    dl_dir = os.path.join(savedir, 'Authors',creator, md_str[2].strip(), name)
     mkdir(dl_dir)
+
+    if dry_run:
+        return
 
     with open(os.path.join(dl_dir, 'html_data.html'), 'w', encoding='utf-8') as f:
         f.write(str(soup))
@@ -134,6 +132,7 @@ def single_dl(url, savedir, authorname=None):
         json.dump(metadata, f, indent=4,ensure_ascii=False)
 
     start_time = time.time()
+
     with requests.get(link, stream=True) as r:
         dl_head = r.headers
         filename = os.path.join(dl_dir, dl_head['Content-Disposition'].split('"')[1])
@@ -142,6 +141,7 @@ def single_dl(url, savedir, authorname=None):
             return
         r.raise_for_status()
         print(f"{name}, {size}")
+
         with open(filename, 'wb') as f:
             # for chunk in r.iter_content(chunk_size=8192):
             # f.write(chunk)
@@ -150,15 +150,12 @@ def single_dl(url, savedir, authorname=None):
     return
 
 
-def batch_dl(author_file, savedir):
+def author_dl(author_file, savedir,dry_run=False):
     with open(f'./src/{author_file}.html', 'r', encoding='utf-8') as f:
         html = f.read()
     soup = BeautifulSoup(html, 'html.parser')
     item_ls = soup.select('.mantine-cf0b3j')
     author_name = soup.select('.mantine-rk7s3e')[0].get_text()
-    print('-----------------------------------------------')
-    print(f'Author: {author_name}')
-    print(f'Download total {len(item_ls)-2} models')
 
     info = soup.select('.mantine-2qa0ve')
     author_info = {
@@ -169,6 +166,10 @@ def batch_dl(author_file, savedir):
         'Likes': info[4].get_text(),
         'Downloads': info[5].get_text(),
     }
+    print('-----------------------------------------------')
+    print(f'Author: {author_name}')
+    print(f'All {info[2].get_text()} models, available {len(item_ls)-2} models')
+
 
     author_dir = os.path.join(savedir, 'Authors', author_name)
     mkdir(author_dir)
@@ -180,7 +181,7 @@ def batch_dl(author_file, savedir):
         if anchor:
             try:
                 url = anchor.get('href')
-                single_dl(url, savedir, author_name)
+                single_dl(url, savedir, author_name,dry_run=dry_run)
             except Exception as e:
                 print(e)
                 print(f'Error on downloading {url}')
@@ -194,11 +195,12 @@ if __name__ == '__main__':
     args.add_argument('-url', type=str, default=debug_url)
     args.add_argument('-author', type=str, default=debug_author)
     args.add_argument('-savedir', type=str, default='./dl')
+    args.add_argument('--dryrun', action='store_true')
     args = args.parse_args()
     if args.author:
-        batch_dl(args.author, args.savedir)
+        author_dl(args.author, args.savedir,args.dryrun)
     elif args.url:
-        single_dl(args.url, args.savedir)
+        single_dl(args.url, args.savedir,args.dryrun)
 
     # url = 'https://civitai.com/models/23440/panty-pull-or-test-sex-act-lora-117'
     # single_dl(url,'./dl')

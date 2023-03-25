@@ -40,18 +40,18 @@ headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
 }
 
-url1 = 'https://civitai.com/models/23440/panty-pull-or-test-sex-act-lora-117'
+#url1 = 'https://civitai.com/models/23440/panty-pull-or-test-sex-act-lora-117'
 
-url2='https://civitai.com/models/23885/yuri-cunnilingus'
+#url2='https://civitai.com/models/23885/yuri-cunnilingus'
 
 
-response = requests.get(
-    url2,
-    cookies=cookies,
-    headers=headers,
-)
 
-soup = BeautifulSoup(response.content, 'html.parser')
+#soup = BeautifulSoup(response.content, 'html.parser')
+author_file='liked'
+
+with open(f'./src/{author_file}.html', 'r', encoding='utf-8') as f:
+    html = f.read()
+soup = BeautifulSoup(html, 'html.parser')
 
 frame=soup.select('.mantine-8od8ev')  # 框架
 
@@ -59,6 +59,7 @@ img=soup.select('.mantine-w0udt3') # 图片
 
 btn=soup.select('.mantine-xickm0') # 18 按钮
 
+item_ls = soup.select('.mantine-cf0b3j')
 
 
 print(len(img))
@@ -67,22 +68,10 @@ print(len(frame))
 
 print(len(btn))
 
-print(img[0].get('href'))
+#print(img[0].get('href'))
+
+print(len(item_ls))
 
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-# 创建 ChromeOptions 对象，并设置 headless 模式
-chrome_options = Options()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('user-agent= "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"')
-
-driver = webdriver.Chrome(options=chrome_options)
-
-for key, value in cookies.items():
-    cookie = {'name': key, 'value': value}
-    driver.add_cookie(cookie)
-driver.get(url1)
-
-print(driver.get_cookies())
+item_ls2 = soup.select('.mantine-l4k5uh')
+print(len(item_ls2))
