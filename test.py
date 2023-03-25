@@ -1,11 +1,13 @@
 import os
+import time
+from selenium.webdriver.support import expected_conditions as EC
 import requests
 from bs4 import BeautifulSoup
 import re
 import shutil
 import requests
 import json
-
+from fake_useragent import UserAgent
 def mkdir(path, rm=False):
     if not os.path.exists(path):
         os.makedirs(path)
@@ -45,13 +47,20 @@ headers = {
 #url2='https://civitai.com/models/23885/yuri-cunnilingus'
 
 
-
-#soup = BeautifulSoup(response.content, 'html.parser')
 author_file='liked'
 
 with open(f'./src/{author_file}.html', 'r', encoding='utf-8') as f:
     html = f.read()
 soup = BeautifulSoup(html, 'html.parser')
+
+
+url2='https://civitai.com/user/dpp12'
+response = requests.get(
+    url2,
+    cookies=cookies,
+    headers=headers,
+)
+soup = BeautifulSoup(response.content, 'html.parser')
 
 frame=soup.select('.mantine-8od8ev')  # 框架
 
@@ -63,15 +72,82 @@ item_ls = soup.select('.mantine-cf0b3j')
 
 
 print(len(img))
-
 print(len(frame))
-
 print(len(btn))
-
 #print(img[0].get('href'))
-
 print(len(item_ls))
 
 
-item_ls2 = soup.select('.mantine-l4k5uh')
+
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+ua = UserAgent()
+userAgent = ua.random
+print(userAgent)
+
+# 创建 ChromeOptions 对象，并设置 headless 模式
+chrome_options = Options()
+chrome_options.add_argument(f'user-agent={userAgent}')
+#chrome_options.add_argument('--headless')
+#chrome_options.add_argument('user-agent= "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"')
+driver = webdriver.Chrome(options=chrome_options)
+time.sleep((2))
+driver.get(url2)
+time.sleep((2))
+with open(os.path.join( 'cookies.json'), 'r') as f:
+    cookies = json.load(f)
+for item in cookies:
+    cookie = {'name': item['name'], 'value': item['value']}
+    driver.add_cookie(cookie)
+
+
+time.sleep((2))
+driver.get(url2)
+c=driver.get_cookies()
+print(c)
+time.sleep((5))
+
+#total_height = driver.execute_script("return document.body.scrollHeight")
+#driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+#time.sleep((2))
+
+
+html=driver.page_source
+soup2= BeautifulSoup(html, 'html.parser')
+frame=soup2.select('.mantine-8od8ev')  # 框架
+img=soup2.select('.mantine-w0udt3') # 图片
+btn=soup2.select('.mantine-xickm0') # 18 按钮
+item_ls2 = soup2.select('.mantine-cf0b3j')
+print(len(img))
+print(len(frame))
+print(len(btn))
 print(len(item_ls2))
+#driver.quit()
+info = soup2.select('.mantine-2qa0ve')
+
+if len(info) >5:
+    author_info = {
+        'Rank': info[0].get_text(),
+        'Uploads': info[2].get_text(),
+        'Followers': info[3].get_text(),
+        'Likes': info[4].get_text(),
+        'Downloads': info[5].get_text(),
+    }
+else:
+    author_info = {
+        'Uploads': info[1].get_text(),
+        'Followers': info[2].get_text(),
+        'Likes': info[3].get_text(),
+        'Downloads': info[4].get_text(),
+    }
+
+c=re.findall('/models/.{15}',str(item_ls2))
+print('model count: ',len(c))
+print(c)
+print(author_info)
+
+
+
+
+
