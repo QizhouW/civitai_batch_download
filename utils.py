@@ -37,4 +37,17 @@ def get_file_sha256(file_path):
     return sha256.hexdigest()
 
 
+def dl_file(url,dl_dir,filepath=None):
+    with requests.get(url, stream=True) as r:
+        if filepath is None:
+            try:
+                filepath = os.path.join(dl_dir, r.headers['Content-Disposition'].split('"')[1])
+            except:
+                print('Can not find the filename on internet, use the last part of url instead')
+                filepath = os.path.join(dl_dir, url.split('/')[-1])
+        with open(filepath, 'wb') as f:
+            # for chunk in r.iter_content(chunk_size=8192):
+            # f.write(chunk)
+            shutil.copyfileobj(r.raw, f)
+
 
