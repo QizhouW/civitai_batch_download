@@ -10,7 +10,7 @@ import json
 from fake_useragent import UserAgent
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+import io
 
 def mkdir(path, rm=False):
     if not os.path.exists(path):
@@ -21,20 +21,32 @@ def mkdir(path, rm=False):
             os.mkdir(path)
 
 
-def get_file_sha256(file_path):
-    # 打开文件，以二进制模式读取文件内容
-    with open(file_path, 'rb') as f:
-        # 创建sha256对象
-        sha256 = hashlib.sha256()
-        while True:
-            # 每次读取4096字节
-            data = f.read(4096)
-            if not data:
-                break
-            # 更新sha256对象
-            sha256.update(data)
-    # 获取sha256哈希值并返回
-    return sha256.hexdigest()
+def purge_dirname(name):
+    name=name.strip()
+    illegal_str = [r'\/', r'\:', r'\*', r'\?', r'\"', r'\<', r'\>', r'\|', ' ']
+    for ill_s in illegal_str:
+        # re.compile()
+        name = re.sub(ill_s, '_', name)
+    return name
+
+def read_chunks(file, size=io.DEFAULT_BUFFER_SIZE):
+    """Yield pieces of data from a file-like object until EOF."""
+    while True:
+        chunk = file.read(size)
+        if not chunk:
+            break
+        yield chunk
+def get_file_sha256(filname):
+    #("Use Memory Optimized SHA256")
+    blocksize=1 << 20
+    h = hashlib.sha256()
+    length = 0
+    with open(os.path.realpath(filname), 'rb') as f:
+        for block in read_chunks(f, size=blocksize):
+            length += len(block)
+            h.update(block)
+    hash_value =  h.hexdigest()
+    return hash_value
 
 
 def dl_file(url,dl_dir,filepath=None):
