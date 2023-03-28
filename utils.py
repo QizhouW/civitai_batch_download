@@ -10,7 +10,9 @@ import json
 from fake_useragent import UserAgent
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+
 import io
+
 
 def mkdir(path, rm=False):
     if not os.path.exists(path):
@@ -19,7 +21,6 @@ def mkdir(path, rm=False):
         if rm:
             shutil.rmtree(path)
             os.mkdir(path)
-
 
 def purge_dirname(name):
     name=name.strip()
@@ -91,4 +92,3 @@ def init_driver():
         json.dump(c, f)
     time.sleep((2.2))
     return driver
-
