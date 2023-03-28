@@ -26,7 +26,7 @@ def retry_wrapper(func):
 
 @retry_wrapper
 def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=False, skip_model=False):
-    time.sleep(1.8)
+    time.sleep(0.5)
     # respect the api provides, do not request too fast
     response = requests.get(f"https://civitai.com/api/v1/models/{model_id}",
                             headers={"Content-Type": "application/json"})
@@ -62,7 +62,9 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
         except:
             pass
 
+
         if not skip_model:
+            time.sleep(0.5)
             with requests.get(metadata['Download_url'], stream=True) as r:
                 filename = os.path.join(dl_dir, 'model',metadata['Filename'])
                 if 'SHA256' not in metadata.keys():
@@ -114,6 +116,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
             residual_tag_num = np.min([len(no_tag_ls), 5 - np.min([len(with_tag_ls), 5])])
 
             for tag_idx, g in enumerate(with_tag_ls):
+                time.sleep(0.2)
                 with requests.get(g['url'], stream=True) as r:
                     imgname = os.path.join(dl_dir, 'imgs', f'tag{tag_idx}.png')
                     r.raise_for_status()
@@ -143,6 +146,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
                 image.save(imgname, pnginfo=png_info)
 
             for tag_idx in range(residual_tag_num):
+                time.sleep(0.2)
                 with requests.get(g['url'], stream=True) as r:
                     filename = os.path.join(dl_dir, 'imgs', f'tag{tag_idx + len(with_tag_ls)}.png')
                     r.raise_for_status()

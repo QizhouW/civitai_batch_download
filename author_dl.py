@@ -1,4 +1,6 @@
 import os, sys
+import time
+
 import requests
 from single_model import dl_model
 import argparse
@@ -14,9 +16,9 @@ import argparse
 def dl_author(username, savedir, versions=1, update_tag=True, random_tag=True, skip_model=True):
     print('Download from author: ', username)
     url = f'https://civitai.com/api/v1/models?username={username}'
+    time.sleep(0.3)
     response = requests.get(url, headers={"Content-Type": "application/json"})
     info = response.json()
-
     dl_count = 1
     print(f'All {info["metadata"]["totalItems"]} models found, start downloading')
     if len(info['items']) == info['metadata']['totalItems']:
@@ -35,6 +37,7 @@ def dl_author(username, savedir, versions=1, update_tag=True, random_tag=True, s
                     dl_count += 1
             else:
                 url = f'https://civitai.com/api/v1/models?username={username}&page={page}'
+                time.sleep(0.3)
                 response = requests.get(url, headers={"Content-Type": "application/json"})
                 info = response.json()
                 for model in info['items']:
