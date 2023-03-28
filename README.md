@@ -5,17 +5,17 @@ Download civitai models in one line. / C站模型批量下载工具
 
 1. 单个模型下载：
 ```python
-python .\single_model.py -id 8505 -update_tag -random_tag -versions=1
+python single_model.py -id 8505 -update_tag -random_tag -versions=1
 ```
 
 2. 批量下载同一作者所有作品
 ```python
-python .\author_dl.py -update_tag -random_tag -username=Cy1zu_
+python author_dl.py -update_tag -random_tag -username=Cy1zu_
 ```
 3. 批量下载一批作者所有作品
 首先把作者的链接集合在author_data.txt 中，格式如示例文件
 ```python
-python .\author_list_dl.py -update_tag -random_tag -file=author_data.txt
+python author_list_dl.py -update_tag -random_tag -file=author_data.txt
 ```
 
 **参数解释：**
