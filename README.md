@@ -1,7 +1,8 @@
 # civitai_batch_download
 Download civitai models in one line. / C站模型批量下载工具
+
 注意，C站服务器最近不稳定，因此我手动添加了延时以防止请求频率过高被拒绝/服务器负载过高     
-如果网络不稳定，建议增加这个延时   
+如果发现网络不稳定，建议继续降低请求频率以保护网站，show some respect。
 
 
 ## 使用例：
