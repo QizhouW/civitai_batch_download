@@ -1,26 +1,14 @@
 import os
 import time
-from selenium.webdriver.support import expected_conditions as EC
-import requests
 from bs4 import BeautifulSoup
-import re
-import shutil
 import requests
 import json
-from pprint import pp
-from fake_useragent import UserAgent
-import pyperclip
 from utils import mkdir, get_file_sha256, dl_file, init_driver, purge_dirname
-from selenium.webdriver.common.by import By
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import numpy as np
 import random
 import shutil
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-
-
 
 
 def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_tag=False, skip_model=False):
@@ -40,6 +28,7 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
         dl_dir = os.path.join(savedir, info['type'], creator + '_' + name, purge_dirname(model_latest['name']))
         mkdir(dl_dir)
         mkdir(os.path.join(dl_dir, 'imgs'))
+        mkdir(os.path.join(dl_dir, 'model'))
         metadata = {
             "Name": name,
             "Creator": creator,
@@ -54,14 +43,14 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
             'Filename': model_latest['files'][0]['name'],
             "Download_url": model_latest['files'][0]['downloadUrl'],
         }
-        try :
+        try:
             metadata['SHA256'] = model_latest['files'][0]['hashes']['SHA256']
         except:
             pass
 
         if not skip_model:
             with requests.get(metadata['Download_url'], stream=True) as r:
-                filename = os.path.join(dl_dir, metadata['Filename'])
+                filename = os.path.join(dl_dir, 'model',metadata['Filename'])
                 if 'SHA256' not in metadata.keys():
                     print(f'No SHA256 for {name}, download anyway')
                     flag = True
@@ -73,7 +62,7 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
                             dl_count += 1
                             continue
                         else:
-                            print(f'Update Tag of {name}: { model_latest["name"]}')
+                            print(f'Update Tag of {name}: {model_latest["name"]}')
                             flag = False
                     else:
                         print(f'Update Model {filename}, size {metadata["Size"]} MB')
@@ -84,16 +73,14 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
                 if flag:
                     r.raise_for_status()
                     with open(filename, 'wb') as f:
-                        # for chunk in r.iter_content(chunk_size=8192):
-                        # f.write(chunk)
                         shutil.copyfileobj(r.raw, f)
         else:
-            print(f'Update Tag of {name}: { model_latest["name"]}')
+            print(f'Update Tag of {name}: {model_latest["name"]}')
 
-        with open(os.path.join(dl_dir, 'metadata.json'), 'w', encoding='utf-8') as f:
+        with open(os.path.join(dl_dir, 'model', 'intro.json'), 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
 
-        with open(os.path.join(dl_dir, 'alldata.json'), 'w', encoding='utf-8') as f:
+        with open(os.path.join(dl_dir,'model', 'metadata.json'), 'w', encoding='utf-8') as f:
             json.dump(info, f, indent=4, ensure_ascii=False)
 
         if update_tag:
@@ -119,8 +106,6 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
                     if os.path.exists(imgname):
                         os.remove(imgname)
                     with open(imgname, 'wb') as f:
-                        # for chunk in r.iter_content(chunk_size=8192):
-                        # f.write(chunk)
                         shutil.copyfileobj(r.raw, f)
                     if tag_idx == 4:
                         break
@@ -138,20 +123,16 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
                     except:
                         # print('this tag is missing:', key)
                         pass
-                #png_info={'parameters':msg}
                 image = Image.open(imgname)
                 png_info = PngInfo()
                 png_info.add_text('parameters', msg)
                 image.save(imgname, pnginfo=png_info)
-
 
             for tag_idx in range(residual_tag_num):
                 with requests.get(g['url'], stream=True) as r:
                     filename = os.path.join(dl_dir, 'imgs', f'tag{tag_idx + len(with_tag_ls)}.png')
                     r.raise_for_status()
                     with open(filename, 'wb') as f:
-                        # for chunk in r.iter_content(chunk_size=8192):
-                        # f.write(chunk)
                         shutil.copyfileobj(r.raw, f)
 
             shutil.copyfile(os.path.join(dl_dir, 'imgs', 'tag0.png'), os.path.join(dl_dir, 'cover.png'))
@@ -161,4 +142,4 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
 
 
 if __name__ == '__main__':
-    dl_model(11468, savedir='./dl', versions_num=3, update_tag=True, random_tag=True, skip_model=False)
+    dl_model(13797, savedir='./dl', versions_num=5, update_tag=True, random_tag=True, skip_model=False)
