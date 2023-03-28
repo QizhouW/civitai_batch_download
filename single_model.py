@@ -135,7 +135,7 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
                     with open(filename, 'wb') as f:
                         shutil.copyfileobj(r.raw, f)
 
-            shutil.copyfile(os.path.join(dl_dir, 'imgs', 'tag0.png'), os.path.join(dl_dir, 'cover.png'))
+            shutil.copyfile(os.path.join(dl_dir, 'imgs', 'tag0.png'), os.path.join(dl_dir, f'{metadata["Filename"][:-12]}.png'))
             dl_count += 1
 
     return
