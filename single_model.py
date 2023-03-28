@@ -9,23 +9,23 @@ import random
 import shutil
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
+import argparse
 
-
-def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_tag=False, skip_model=False):
-    time.sleep(0.5)
+def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=False, skip_model=False):
+    time.sleep(0.05)
     # respect the api provides, do not request too fast
     response = requests.get(f"https://civitai.com/api/v1/models/{model_id}",
                             headers={"Content-Type": "application/json"})
     info = response.json()
-
     name = info['name']
     creator = info['creator']['username'].strip()
     name = purge_dirname(name)
     dl_count = 0
     for model_latest in info['modelVersions']:
-        if dl_count == versions_num and not skip_model:
+        if dl_count == versions and not skip_model:
             break
-        dl_dir = os.path.join(savedir, info['type'], creator + '_' + name, purge_dirname(model_latest['name']))
+        dl_dir = os.path.join(savedir, info['type'], creator + '-' + name, purge_dirname(model_latest['name']))
+
         mkdir(dl_dir)
         mkdir(os.path.join(dl_dir, 'imgs'))
         mkdir(os.path.join(dl_dir, 'model'))
@@ -142,4 +142,16 @@ def dl_model(model_id, savedir='./dl', versions_num=1, update_tag=True, random_t
 
 
 if __name__ == '__main__':
-    dl_model(13797, savedir='./dl', versions_num=5, update_tag=True, random_tag=True, skip_model=False)
+    args = argparse.ArgumentParser()
+    args.add_argument('-id', type=int, default=-1)
+    args.add_argument('-update_tag', action='store_true')
+    args.add_argument('-random_tag', action='store_true')
+    args.add_argument('-skip_model', action='store_true')
+    args.add_argument('-versions', type=int, default=1)
+    args.add_argument('-savedir', type=str, default='./dl')
+    opt = args.parse_args()
+    if opt.id == -1:
+        print('Please specify the model id')
+        exit(-1)
+    dl_model(opt.id, savedir=opt.savedir,versions=opt.versions, update_tag=opt.update_tag,
+              random_tag=opt.random_tag, skip_model=opt.skip_model)

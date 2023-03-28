@@ -22,7 +22,7 @@ def dl_author(username, savedir, versions=1, update_tag=True, random_tag=True, s
     if len(info['items']) == info['metadata']['totalItems']:
         for model in info['items']:
             print(f'Model {dl_count}: ', model['name'])
-            dl_model(model['id'], savedir=savedir, versions_num=versions, update_tag=update_tag,
+            dl_model(model['id'], savedir=savedir, versions=versions, update_tag=update_tag,
                      random_tag=random_tag, skip_model=skip_model)
             dl_count += 1
     else:
@@ -30,7 +30,7 @@ def dl_author(username, savedir, versions=1, update_tag=True, random_tag=True, s
             if page == 1:
                 for model in info['items']:
                     print(f'Model {dl_count}: ', model['name'])
-                    dl_model(model['id'], savedir=savedir, versions_num=versions, update_tag=update_tag,
+                    dl_model(model['id'], savedir=savedir, versions=versions, update_tag=update_tag,
                              random_tag=random_tag, skip_model=skip_model)
                     dl_count += 1
             else:
@@ -39,7 +39,7 @@ def dl_author(username, savedir, versions=1, update_tag=True, random_tag=True, s
                 info = response.json()
                 for model in info['items']:
                     print(f'Model {dl_count}: ', model['name'])
-                    dl_model(model['id'], savedir=savedir, versions_num=versions, update_tag=update_tag,
+                    dl_model(model['id'], savedir=savedir, versions=versions, update_tag=update_tag,
                              random_tag=random_tag, skip_model=skip_model)
                     dl_count += 1
     print(f'All {dl_count - 1} models downloaded')
