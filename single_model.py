@@ -11,8 +11,22 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 import argparse
 
+
+def retry_wrapper(func):
+    def wrapper(*args, **kwargs):
+        count = 0
+        while count < 5:
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                count += 1
+                print(f"Error: {e}. Retrying ({count}/10)...")
+        print("Max retries exceeded. Exiting.")
+    return wrapper
+
+@retry_wrapper
 def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=False, skip_model=False):
-    time.sleep(0.05)
+    time.sleep(1.8)
     # respect the api provides, do not request too fast
     response = requests.get(f"https://civitai.com/api/v1/models/{model_id}",
                             headers={"Content-Type": "application/json"})
@@ -57,7 +71,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
                 elif os.path.exists(filename):
                     existing_hash = get_file_sha256(filename)
                     if existing_hash.capitalize() == metadata['SHA256'].capitalize():
-                        print(f'File {filename} already exists')
+                        print(f'File {metadata["Filename"]} already exists')
                         if not update_tag:
                             dl_count += 1
                             continue
