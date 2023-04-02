@@ -91,7 +91,7 @@ def dl_file(url,dl_dir,filepath=None):
             shutil.copyfileobj(r.raw, f)
 
 
-def init_driver():
+def init_driver(cookie_path='./src/cookies.json'):
     url='https://civitai.com'
     ua = UserAgent()
     userAgent = ua.random
@@ -106,7 +106,7 @@ def init_driver():
     time.sleep((1))
     driver.get(url)
     time.sleep((2))
-    with open(os.path.join('src','cookies.json'), 'r') as f:
+    with open(cookie_path, 'r') as f:
         cookies = json.load(f)
     for item in cookies:
         cookie = {'name': item['name'], 'value': item['value']}
