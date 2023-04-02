@@ -1,5 +1,5 @@
 import hashlib
-import os
+import os,sys
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -10,8 +10,24 @@ import json
 from fake_useragent import UserAgent
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+import argparse
 import io
+
+
+
+class Logger:
+    def __init__(self, filename):
+        self.terminal = sys.stdout
+        self.logfile = open(filename, 'a')
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.logfile.write(message)
+
+    def flush(self):
+        pass
+
+
 
 
 def mkdir(path, rm=False):
@@ -21,6 +37,17 @@ def mkdir(path, rm=False):
         if rm:
             shutil.rmtree(path)
             os.mkdir(path)
+
+
+def get_base_opt():
+    args = argparse.ArgumentParser()
+    args.add_argument('-update_tag', action='store_true')
+    args.add_argument('-random_tag', action='store_true')
+    args.add_argument('-skip_model', action='store_true')
+    args.add_argument('-versions', type=int, default=1)
+    args.add_argument('-savedir', type=str, default='../dl')
+    return args
+
 
 def purge_dirname(name):
     name=name.strip()

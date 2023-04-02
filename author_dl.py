@@ -49,13 +49,12 @@ def dl_author(username, savedir, versions=1, update_tag=True, random_tag=True, s
 
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser()
+    from utils import get_base_opt, Logger
+    timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+    sys.stdout = Logger(f'./logs/author_dl_{timestamp}.txt')
+
+    args = get_base_opt()
     args.add_argument('-username', type=str, default='NONE')
-    args.add_argument('-update_tag', action='store_true')
-    args.add_argument('-random_tag', action='store_true')
-    args.add_argument('-skip_model', action='store_true')
-    args.add_argument('-versions', type=int, default=1)
-    args.add_argument('-savedir', type=str, default='./dl')
     opt = args.parse_args()
     if opt.username == 'NONE':
         print('Please input the username')

@@ -1,1 +1,49 @@
-## TBD
+import os, sys
+import time
+import requests
+from single_model import dl_model
+import argparse
+from selenium.webdriver.common.by import By
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import time
+from selenium.webdriver.support import expected_conditions as EC
+import requests
+from bs4 import BeautifulSoup
+import re
+import shutil
+import requests
+import json
+from fake_useragent import UserAgent
+from utils import mkdir, get_file_sha256, dl_file, init_driver, purge_dirname
+
+
+def list_dl(opt):
+    filename=opt.file
+    id_list=[]
+    with open(filename, 'r', encoding='utf-8') as f:
+        tmp=f.readlines()
+        for line in tmp:
+            model_id = line.strip()
+            if model_id.startswith('#') or model_id == '':
+                continue
+            else:
+                id_list.append(model_id)
+    print(f'Download from {len(id_list)} listed models')
+
+    for i,model_id in enumerate(id_list):
+        print(f'Model No.{i+1}')
+        dl_model(model_id, opt.savedir, versions=opt.versions, update_tag=opt.update_tag,
+                         random_tag=opt.random_tag, skip_model=opt.skip_model)
+    return
+
+
+if __name__=='__main__':
+    from utils import get_base_opt, Logger
+    timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+    sys.stdout = Logger(f'./logs/list_dl_{timestamp}.txt')
+    args = get_base_opt()
+    args.add_argument('-file', type=str, default='./models_list.txt')
+    opt = args.parse_args()
+    list_dl(opt)
+

@@ -1,4 +1,4 @@
-import os
+import os,sys
 import time
 from bs4 import BeautifulSoup
 import requests
@@ -35,10 +35,10 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
     creator = info['creator']['username'].strip()
     name = purge_dirname(name)
     dl_count = 0
-    for model_latest in info['modelVersions']:
+    for chosen_model in info['modelVersions']:
         if dl_count == versions and not skip_model:
             break
-        dl_dir = os.path.join(savedir, info['type'], creator + '-' + name, purge_dirname(model_latest['name']))
+        dl_dir = os.path.join(savedir, info['type'], creator + '-' + name, purge_dirname(chosen_model['name']))
 
         mkdir(dl_dir)
         mkdir(os.path.join(dl_dir, 'imgs'))
@@ -47,18 +47,18 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
             "Name": name,
             "Creator": creator,
             'Type': info['type'],
-            'Version': model_latest['name'],
-            'Trigger Words': model_latest['trainedWords'],
+            'Version': chosen_model['name'],
+            'Trigger Words': chosen_model['trainedWords'],
             "Link": f'https://civitai.com/models/{model_id}/',
             "Description": BeautifulSoup(info['description'], 'html.parser').get_text(),
-            'Last Update': model_latest['updatedAt'],
-            'Base Model': model_latest['baseModel'],
-            "Size": np.round(model_latest['files'][0]['sizeKB'] / 1024, 2),
-            'Filename': model_latest['files'][0]['name'],
-            "Download_url": model_latest['files'][0]['downloadUrl'],
+            'Last Update': chosen_model['updatedAt'],
+            'Base Model': chosen_model['baseModel'],
+            "Size": np.round(chosen_model['files'][0]['sizeKB'] / 1024, 2),
+            'Filename': chosen_model['files'][0]['name'],
+            "Download_url": chosen_model['files'][0]['downloadUrl'],
         }
         try:
-            metadata['SHA256'] = model_latest['files'][0]['hashes']['SHA256']
+            metadata['SHA256'] = chosen_model['files'][0]['hashes']['SHA256']
         except:
             pass
 
@@ -78,7 +78,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
                             dl_count += 1
                             continue
                         else:
-                            print(f'Update Tag of {name}: {model_latest["name"]}')
+                            print(f'Update Tag of {name}: {chosen_model["name"]}')
                             flag = False
                     else:
                         print(f'Update Model {filename}, size {metadata["Size"]} MB')
@@ -91,7 +91,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
                     with open(filename, 'wb') as f:
                         shutil.copyfileobj(r.raw, f)
         else:
-            print(f'Update Tag of {name}: {model_latest["name"]}')
+            print(f'Update Tag of {name}: {chosen_model["name"]}')
 
         with open(os.path.join(dl_dir, 'model', 'intro.json'), 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
@@ -100,7 +100,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
             json.dump(info, f, indent=4, ensure_ascii=False)
 
         if update_tag:
-            gallery = model_latest['images']
+            gallery = chosen_model['images']
             with_tag_ls = []
             no_tag_ls = []
             for g in gallery:
@@ -160,13 +160,12 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
 
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser()
+    from utils import get_base_opt, Logger
+
+    timestamp = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+    sys.stdout = Logger(f'./logs/single_dl_{timestamp}.txt')
+    args = get_base_opt()
     args.add_argument('-id', type=int, default=-1)
-    args.add_argument('-update_tag', action='store_true')
-    args.add_argument('-random_tag', action='store_true')
-    args.add_argument('-skip_model', action='store_true')
-    args.add_argument('-versions', type=int, default=1)
-    args.add_argument('-savedir', type=str, default='./dl')
     opt = args.parse_args()
     if opt.id == -1:
         print('Please specify the model id')

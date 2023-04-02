@@ -5,13 +5,9 @@ import argparse
 from author_dl import dl_author
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser()
-    args.add_argument('-file', type=str, default='author_data.txt')
-    args.add_argument('-update_tag', action='store_true')
-    args.add_argument('-random_tag', action='store_true')
-    args.add_argument('-skip_model', action='store_true')
-    args.add_argument('-versions', type=int, default=1)
-    args.add_argument('-savedir', type=str, default='./dl')
+    from utils import get_base_opt
+    args = get_base_opt()
+    args.add_argument('-file', type=str, default='./author_data.txt')
     opt = args.parse_args()
     author_list=[]
     with open(opt.file, 'r', encoding='utf-8') as f:
