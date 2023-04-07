@@ -44,6 +44,7 @@ def get_base_opt():
     args.add_argument('-update_tag', action='store_true')
     args.add_argument('-random_tag', action='store_true')
     args.add_argument('-skip_model', action='store_true')
+    args.add_argument('-only_new', action='store_true')
     args.add_argument('-versions', type=int, default=1)
     args.add_argument('-savedir', type=str, default='../dl')
     return args

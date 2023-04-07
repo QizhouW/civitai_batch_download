@@ -20,18 +20,19 @@ def retry_wrapper(func):
                 return func(*args, **kwargs)
             except Exception as e:
                 count += 1
-                print(f"Error: {e}. Retrying ({count}/10)...")
+                print(f"Error: {e}. Retrying ({count}/5)...")
         print("Max retries exceeded. Exiting.")
     return wrapper
 
-@retry_wrapper
-def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=False, skip_model=False):
+#@retry_wrapper
+def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=False, skip_model=False,only_new=False):
     time.sleep(0.5)
     # respect the api provides, do not request too fast
     response = requests.get(f"https://civitai.com/api/v1/models/{model_id}",
                             headers={"Content-Type": "application/json"})
     info = response.json()
     name = info['name']
+    print(f"{name}: ")
     creator = info['creator']['username'].strip()
     name = purge_dirname(name)
     dl_count = 0
@@ -39,10 +40,16 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
         if dl_count == versions and not skip_model:
             break
         dl_dir = os.path.join(savedir, info['type'], creator + '-' + name, purge_dirname(chosen_model['name']))
-
+        if only_new and os.path.exists(dl_dir):
+            print(f"Model {name} already exists, skipping...")
+            break
         mkdir(dl_dir)
         mkdir(os.path.join(dl_dir, 'imgs'))
         mkdir(os.path.join(dl_dir, 'model'))
+        try:
+            disp=BeautifulSoup(info['description'], 'html.parser').get_text()
+        except:
+            disp= 'No description'
         metadata = {
             "Name": name,
             "Creator": creator,
@@ -50,7 +57,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
             'Version': chosen_model['name'],
             'Trigger Words': chosen_model['trainedWords'],
             "Link": f'https://civitai.com/models/{model_id}/',
-            "Description": BeautifulSoup(info['description'], 'html.parser').get_text(),
+            "Description": disp,
             'Last Update': chosen_model['updatedAt'],
             'Base Model': chosen_model['baseModel'],
             "Size": np.round(chosen_model['files'][0]['sizeKB'] / 1024, 2),
@@ -68,7 +75,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
             with requests.get(metadata['Download_url'], stream=True) as r:
                 filename = os.path.join(dl_dir, 'model',metadata['Filename'])
                 if 'SHA256' not in metadata.keys():
-                    print(f'No SHA256 for {name}, download anyway')
+                    print(f'No SHA256 for {name}, download anyway, size {metadata["Size"]} MB')
                     flag = True
                 elif os.path.exists(filename):
                     existing_hash = get_file_sha256(filename)
@@ -78,7 +85,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
                             dl_count += 1
                             continue
                         else:
-                            print(f'Update Tag of {name}: {chosen_model["name"]}')
+                            #print(f'Update Tag of {name}: {chosen_model["name"]}')
                             flag = False
                     else:
                         print(f'Update Model {filename}, size {metadata["Size"]} MB')
@@ -90,8 +97,12 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
                     r.raise_for_status()
                     with open(filename, 'wb') as f:
                         shutil.copyfileobj(r.raw, f)
+                    if not update_tag:
+                        dl_count += 1
+                        continue
         else:
-            print(f'Update Tag of {name}: {chosen_model["name"]}')
+            pass
+            #print(f'Update Tag of {name}: {chosen_model["name"]}')
 
         with open(os.path.join(dl_dir, 'model', 'intro.json'), 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
@@ -100,6 +111,7 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
             json.dump(info, f, indent=4, ensure_ascii=False)
 
         if update_tag:
+            print(f'Update Tag of {name}: {chosen_model["name"]}')
             gallery = chosen_model['images']
             with_tag_ls = []
             no_tag_ls = []
@@ -118,12 +130,15 @@ def dl_model(model_id, savedir='./dl', versions=1, update_tag=True, random_tag=F
             for tag_idx, g in enumerate(with_tag_ls):
                 time.sleep(0.2)
                 with requests.get(g['url'], stream=True) as r:
-                    imgname = os.path.join(dl_dir, 'imgs', f'tag{tag_idx}.png')
                     r.raise_for_status()
+                    ext=g['url'].split('.')[-1]
+                    imgname = os.path.join(dl_dir, 'imgs', f'tag{tag_idx}.{ext}')
                     if os.path.exists(imgname):
                         os.remove(imgname)
                     with open(imgname, 'wb') as f:
-                        shutil.copyfileobj(r.raw, f)
+                        for chunk in r.iter_content(chunk_size=1024):
+                            if chunk:
+                                f.write(chunk)
                     if tag_idx == 4:
                         break
 
@@ -167,8 +182,12 @@ if __name__ == '__main__':
     args = get_base_opt()
     args.add_argument('-id', type=int, default=-1)
     opt = args.parse_args()
+    opt.id = 7505
+    opt.update_tag = True
+    opt.random_tag = True
     if opt.id == -1:
         print('Please specify the model id')
         exit(-1)
+    print(opt.versions)
     dl_model(opt.id, savedir=opt.savedir,versions=opt.versions, update_tag=opt.update_tag,
-              random_tag=opt.random_tag, skip_model=opt.skip_model)
+              random_tag=opt.random_tag, skip_model=opt.skip_model,only_new=opt.only_new)
